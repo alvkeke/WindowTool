@@ -1,0 +1,3 @@
+﻿  main.cpp
+C:\Users\alvis\Desktop\vs2019\HookTest\HookTest\main.cpp(91,15): warning C4553: “==”: 未使用表达式结果；是否打算使用“=”?
+  HookTest.vcxproj -> C:\Users\alvis\Desktop\vs2019\HookTest\Debug\HookTest.exe

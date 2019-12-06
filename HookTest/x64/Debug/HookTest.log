@@ -1,0 +1,4 @@
+﻿  main.cpp
+C:\workspace\VS\HookTest\HookTest\main.cpp(45,32): warning C4302: “类型强制转换”: 从“LPSTR”到“WORD”截断
+C:\workspace\VS\HookTest\HookTest\main.cpp(111,12): warning C4244: “return”: 从“WPARAM”转换到“int”，可能丢失数据
+  HookTest.vcxproj -> C:\workspace\VS\HookTest\x64\Debug\HookTest.exe

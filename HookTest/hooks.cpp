@@ -4,7 +4,7 @@
 HWND fWin;
 RECT winRect;
 POINT pDown, pNow;
-bool bIsWinKeyDown;
+bool bIsFuncKeyDown;
 bool bWant2Move;
 bool bWant2Size;
 
@@ -13,12 +13,13 @@ HHOOK kHook, mHook;
 vector<string> MarkedClasses;
 
 
+
 int initHook(HINSTANCE hInstance, vector<string> s)
 {
 
 	MarkedClasses = s;
 
-	bIsWinKeyDown = false;
+	bIsFuncKeyDown = false;
 	bWant2Move = false;
 	bWant2Size = false;
 
@@ -58,35 +59,43 @@ LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 	if (nCode >= 0)
 	{
-		if (bIsWinKeyDown == false && wParam == WM_KEYDOWN && p->vkCode == VK_LWIN)
+		if (bIsFuncKeyDown == false && wParam == WM_SYSKEYDOWN && p->vkCode == FUNC_KEY)
 		{
-			bIsWinKeyDown = true;
+			bIsFuncKeyDown = true;
 			bWant2Move = false;
 			bWant2Size = false;
 		}
 
-		if (bIsWinKeyDown && wParam == WM_KEYUP && p->vkCode == VK_LWIN)
+		if (bIsFuncKeyDown && wParam == WM_KEYUP && p->vkCode == FUNC_KEY)
 		{
-			bIsWinKeyDown = false;
+			bIsFuncKeyDown = false;
 
 			RECT rNow;
 			GetWindowRect(fWin, &rNow);
-
+			/*
 			if (rNow.bottom != winRect.bottom) {
 				winRect = rNow;
-				return 1;
+				// return 1;
 			}
 			if (rNow.left != winRect.left) {
 				winRect = rNow;
-				return 1;
+				// return 1;
 			}
 			if (rNow.right != winRect.right) {
 				winRect = rNow;
-				return 1;
+				// return 1;
 			}
 			if (rNow.top != winRect.top) {
 				winRect = rNow;
-				return 1;
+				// return 1;
+			}
+			*/
+			if (rNow.bottom != winRect.bottom || rNow.left != winRect.left || rNow.right != winRect.right || rNow.top != winRect.top)
+			{
+				winRect = rNow;
+				// HWND hF = GetFocus();
+				SendMessage(fWin, WM_KEYUP, FUNC_KEY, 1);
+				SendMessage(fWin, WM_SYSKEYDOWN, FUNC_KEY, 1);
 			}
 		}
 
@@ -101,7 +110,7 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 	LPMSLLHOOKSTRUCT p = (LPMSLLHOOKSTRUCT)lParam;
 	POINT   pt = p->pt;
 
-	if (nCode >= 0 && bIsWinKeyDown)
+	if (nCode >= 0 && bIsFuncKeyDown)
 	{
 		int newX, newY;
 		int newW, newH;

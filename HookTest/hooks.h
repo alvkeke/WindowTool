@@ -4,6 +4,8 @@
 
 using namespace std;
 
+#define FUNC_KEY VK_LMENU
+
 int initHook(HINSTANCE hInstance, vector<string>);
 
 LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam);

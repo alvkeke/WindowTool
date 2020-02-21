@@ -52,7 +52,12 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "图标.ico"
+
+IDI_ICON_APP               ICON                    "application.ico"
+
+IDI_ICON_BLK               ICON                    "block.ico"
+
+IDI_ICON_ENB               ICON                    "enable.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -60,7 +65,7 @@ IDI_ICON1               ICON                    "图标.ico"
 // Menu
 //
 
-IDR_MENU1 MENU
+IDR_MENUROOT MENU
 BEGIN
     POPUP "子菜单"
     BEGIN

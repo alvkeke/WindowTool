@@ -147,7 +147,9 @@
     <ResourceCompile Include="HookTest.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="图标.ico" />
+    <Image Include="application.ico" />
+    <Image Include="block.ico" />
+    <Image Include="enable.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

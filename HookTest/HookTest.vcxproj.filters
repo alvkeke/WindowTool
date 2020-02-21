@@ -42,7 +42,13 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="图标.ico">
+    <Image Include="application.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="block.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="enable.ico">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

@@ -1,9 +1,19 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ 生成的包含文件。
 // 供 HookTest.rc 使用
-//
-#define IDI_ICON1                       101
-#define IDR_MENU1                       102
+/*
+IDI_ICON_APP               ICON                    "application.ico"
+
+IDI_ICON_ENB               ICON                    "block.ico"
+
+IDI_ICON_BLK               ICON                    "enable.ico"
+*/
+
+
+#define IDI_ICON_APP					100
+#define IDI_ICON_ENB					101
+#define IDI_ICON_BLK					102
+#define IDR_MENUROOT                    103
 #define IDM_ENABLE                      40006
 #define IDM_EXIT                        40007
 

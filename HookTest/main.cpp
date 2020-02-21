@@ -10,6 +10,9 @@
 using namespace std;
 
 bool isEnable;
+ATOM hotkeyId;
+
+
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -23,7 +26,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 
 		hInstance = GetModuleHandle(NULL);
-		hmRoot = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU1));
+		hmRoot = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENUROOT));
 		hmPop = GetSubMenu(hmRoot, 0);
 
 		break;
@@ -32,17 +35,45 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ShowWindow(hwnd, SW_HIDE);
 		return 1;
 		
+	case WM_HOTKEY:
+		if(wParam == hotkeyId)
+		{
+			isEnable = !isEnable;
+			setListenState(isEnable);			
+
+			if (isEnable) 
+			{
+				ShowBalloonTip("快捷操作已  启用（switch on）。", "状态更改", 1500);
+				ChangeTrayIcon(IDI_ICON_ENB);
+			}
+			else
+			{
+				ShowBalloonTip("快捷操作已  关闭（switch off）。", "状态更改", 1500);
+				ChangeTrayIcon(IDI_ICON_BLK);
+			}
+		}
+		break;
+
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDM_ENABLE:
 			isEnable = !isEnable;
 			setListenState(isEnable);
+			if (isEnable) 
+			{
+				ChangeTrayIcon(IDI_ICON_ENB);
+			}
+			else
+			{
+				ChangeTrayIcon(IDI_ICON_BLK);
+			}
 			break;
 		case IDM_EXIT:
 			delTrayIcon();
 			PostQuitMessage(0);
 			break;
 		}
+		
 
 		break;
 	case WM_TRAY_ICON:
@@ -88,7 +119,7 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wc.cbWndExtra = 0;
 	wc.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
 	wc.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(IDC_ARROW));
-	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
+	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON_APP));
 	wc.hIconSm = NULL;
 	wc.hInstance = hInstance;
 	wc.lpfnWndProc = WndProc;
@@ -137,14 +168,18 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		}
 	}
 
-
 	if (initHook(hInstance, MarkedClasses))
 	{
 		MessageBox(0, "监听出错，程序已退出。\nError in listen event, application exit.", TEXT("错误"), MB_OK | MB_ICONERROR);
 		return 1;
 	}
 	
+	// 默认状态，以后可以修改为从配置文件中读取
+	isEnable = true;
 	setListenState(isEnable);
+
+	hotkeyId = GlobalAddAtom("switchStateKey") - 0xc000;
+	RegisterHotKey(hwnd, hotkeyId, MOD_ALT, VK_F12);
 
 	// 5. 消息循环
 	MSG Msg;

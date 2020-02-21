@@ -78,24 +78,7 @@ LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 			RECT rNow;
 			GetWindowRect(fWin, &rNow);
-			/*
-			if (rNow.bottom != winRect.bottom) {
-				winRect = rNow;
-				// return 1;
-			}
-			if (rNow.left != winRect.left) {
-				winRect = rNow;
-				// return 1;
-			}
-			if (rNow.right != winRect.right) {
-				winRect = rNow;
-				// return 1;
-			}
-			if (rNow.top != winRect.top) {
-				winRect = rNow;
-				// return 1;
-			}
-			*/
+
 			if (rNow.bottom != winRect.bottom || rNow.left != winRect.left || rNow.right != winRect.right || rNow.top != winRect.top)
 			{
 				winRect = rNow;
@@ -104,7 +87,6 @@ LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 				SendMessage(fWin, WM_SYSKEYDOWN, FUNC_KEY, 1);
 			}
 		}
-
 	}
 
 	return CallNextHookEx(kHook, nCode, wParam, lParam);

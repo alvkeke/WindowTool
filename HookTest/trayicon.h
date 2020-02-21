@@ -5,3 +5,7 @@
 void initTrayIcon(HWND hwnd);
 
 void delTrayIcon();
+
+BOOL ChangeTrayIcon(int id);
+
+BOOL ShowBalloonTip(LPCTSTR szMsg, LPCTSTR szTitle, UINT uTimeout, DWORD dwInfoFlags = 1);

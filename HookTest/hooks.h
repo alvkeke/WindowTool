@@ -8,6 +8,9 @@ using namespace std;
 
 int initHook(HINSTANCE hInstance, vector<string>);
 
+void setListenState(bool foo);
+
 LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
+

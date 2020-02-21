@@ -3,28 +3,73 @@
 #include <vector>
 #include "hooks.h"
 #include "trayicon.h"
+#include "resource.h"
 
 #define FILENAME "MarkConfigure.conf"
 
 using namespace std;
 
+bool isEnable;
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	HINSTANCE hInstance;
+	HMENU hmRoot;
+	static HMENU hmPop;
+
 	switch (uMsg)    //消息选择
 	{
+
+	case WM_CREATE:
+
+		hInstance = GetModuleHandle(NULL);
+		hmRoot = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU1));
+		hmPop = GetSubMenu(hmRoot, 0);
+
+		break;
+
+	case WM_CLOSE:
+		ShowWindow(hwnd, SW_HIDE);
+		return 1;
 		
-	case WM_USER:
-		if (lParam == WM_LBUTTONUP) {
-			MessageBox(hwnd, TEXT("Win32 API 实现系统托盘程序,双击托盘可以退出!"), "", MB_OK);
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDM_ENABLE:
+			isEnable = !isEnable;
+			setListenState(isEnable);
+			break;
+		case IDM_EXIT:
+			delTrayIcon();
+			PostQuitMessage(0);
+			break;
 		}
 
-		if (lParam == WM_RBUTTONDBLCLK) {
-			int res = MessageBox(hwnd, "是否退出程序？", "退出", MB_YESNO);
-			if (res == IDYES) {
-				delTrayIcon();
-				PostQuitMessage(0);
-			}
+		break;
+	case WM_TRAY_ICON:
+
+		if (lParam == WM_LBUTTONDBLCLK) 
+		{
+			ShowWindow(hwnd, SW_SHOW);
 		}
+		else if (lParam == WM_RBUTTONUP) 
+		{
+			
+			POINT p;
+			GetCursorPos(&p);
+			SetForegroundWindow(hwnd);
+			if (isEnable) 
+			{
+				CheckMenuItem(hmPop, IDM_ENABLE, MF_CHECKED);
+			}
+			else 
+			{
+				CheckMenuItem(hmPop, IDM_ENABLE, MF_UNCHECKED);
+			}
+			TrackPopupMenu(hmPop, TPM_RIGHTBUTTON, p.x, p.y, NULL, hwnd, NULL);
+
+		}
+		
+		break;
 	}
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 	//对于我们不想处理的消息, 比如鼠标在窗口上移动时发出的消息
@@ -43,7 +88,7 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wc.cbWndExtra = 0;
 	wc.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
 	wc.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(IDC_ARROW));
-	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
 	wc.hIconSm = NULL;
 	wc.hInstance = hInstance;
 	wc.lpfnWndProc = WndProc;
@@ -99,6 +144,7 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return 1;
 	}
 	
+	setListenState(isEnable);
 
 	// 5. 消息循环
 	MSG Msg;

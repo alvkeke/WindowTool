@@ -12,6 +12,7 @@ HHOOK kHook, mHook;
 
 vector<string> MarkedClasses;
 
+bool isListening;
 
 
 int initHook(HINSTANCE hInstance, vector<string> s)
@@ -53,11 +54,16 @@ int initHook(HINSTANCE hInstance, vector<string> s)
 	return 0;
 }
 
+void setListenState(bool foo)
+{
+	isListening = foo;
+}
+
 LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
 
-	if (nCode >= 0)
+	if (isListening && nCode >= 0)
 	{
 		if (bIsFuncKeyDown == false && wParam == WM_SYSKEYDOWN && p->vkCode == FUNC_KEY)
 		{
@@ -110,7 +116,7 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 	LPMSLLHOOKSTRUCT p = (LPMSLLHOOKSTRUCT)lParam;
 	POINT   pt = p->pt;
 
-	if (nCode >= 0 && bIsFuncKeyDown)
+	if (isListening && nCode >= 0 && bIsFuncKeyDown)
 	{
 		int newX, newY;
 		int newW, newH;

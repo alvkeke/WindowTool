@@ -1,117 +1,17 @@
-#include <fstream>
-#include <string>
-#include <vector>
+
 #include "hooks.h"
 #include "trayicon.h"
 #include "resource.h"
+#include "main.h"
 
-#define FILENAME "MarkConfigure.conf"
-
-using namespace std;
 
 bool isEnable;
 ATOM hotkeyId;
 
 
-
-LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	HINSTANCE hInstance;
-	HMENU hmRoot;
-	static HMENU hmPop;
-
-	switch (uMsg)    //消息选择
-	{
-
-	case WM_CREATE:
-
-		hInstance = GetModuleHandle(NULL);
-		hmRoot = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENUROOT));
-		hmPop = GetSubMenu(hmRoot, 0);
-
-		break;
-
-	case WM_CLOSE:
-		ShowWindow(hwnd, SW_HIDE);
-		return 1;
-		
-	case WM_HOTKEY:
-		if(wParam == hotkeyId)
-		{
-			isEnable = !isEnable;
-			setListenState(isEnable);			
-
-			if (isEnable) 
-			{
-				ShowBalloonTip("快捷操作已  启用（switch on）。", "状态更改", 1500);
-				ChangeTrayIcon(IDI_ICON_ENB);
-			}
-			else
-			{
-				ShowBalloonTip("快捷操作已  关闭（switch off）。", "状态更改", 1500);
-				ChangeTrayIcon(IDI_ICON_BLK);
-			}
-		}
-		break;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDM_ENABLE:
-			isEnable = !isEnable;
-			setListenState(isEnable);
-			if (isEnable) 
-			{
-				ChangeTrayIcon(IDI_ICON_ENB);
-			}
-			else
-			{
-				ChangeTrayIcon(IDI_ICON_BLK);
-			}
-			break;
-		case IDM_EXIT:
-			delTrayIcon();
-			PostQuitMessage(0);
-			break;
-		}
-		
-
-		break;
-	case WM_TRAY_ICON:
-
-		if (lParam == WM_LBUTTONDBLCLK) 
-		{
-			ShowWindow(hwnd, SW_SHOW);
-		}
-		else if (lParam == WM_RBUTTONUP) 
-		{
-			
-			POINT p;
-			GetCursorPos(&p);
-			SetForegroundWindow(hwnd);
-			if (isEnable) 
-			{
-				CheckMenuItem(hmPop, IDM_ENABLE, MF_CHECKED);
-			}
-			else 
-			{
-				CheckMenuItem(hmPop, IDM_ENABLE, MF_UNCHECKED);
-			}
-			TrackPopupMenu(hmPop, TPM_RIGHTBUTTON, p.x, p.y, NULL, hwnd, NULL);
-
-		}
-		
-		break;
-	}
-	return DefWindowProc(hwnd, uMsg, wParam, lParam);
-	//对于我们不想处理的消息, 比如鼠标在窗口上移动时发出的消息
-	//我们就原样传给默认的窗口消息处理函数处理, 不然应用程序会失去响应
-}
-
-
 int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	LPSTR lpCmdLine, int nCmdShow)
 {
-
 
 	WNDCLASSEX wc;
 	wc.cbClsExtra = 0;
@@ -123,7 +23,7 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wc.hIconSm = NULL;
 	wc.hInstance = hInstance;
 	wc.lpfnWndProc = WndProc;
-	wc.lpszClassName = "HIDE_MY_WIND";
+	wc.lpszClassName = WNDCLASS;
 	wc.lpszMenuName = NULL;
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 
@@ -132,7 +32,7 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return 1;
 	}
 
-	HWND hwnd = CreateWindowEx(0, "HIDE_MY_WIND", "mouse tool", WS_OVERLAPPEDWINDOW,
+	HWND hwnd = CreateWindowEx(0, WNDCLASS, WNDTITLE, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, 320, 240, NULL, NULL, hInstance, NULL);
 
 	if (!hwnd) {
@@ -179,7 +79,7 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	setListenState(isEnable);
 
 	hotkeyId = GlobalAddAtom("switchStateKey") - 0xc000;
-	RegisterHotKey(hwnd, hotkeyId, MOD_ALT, VK_F12);
+	RegisterHotKey(hwnd, hotkeyId, HOT_KEY_FUNC, HOOK_KEY_SWITCH);
 
 	// 5. 消息循环
 	MSG Msg;
@@ -190,4 +90,99 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	}
 
 	return Msg.wParam;
+}
+
+
+
+LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	HINSTANCE hInstance;
+	HMENU hmRoot;
+	static HMENU hmPop;
+
+	switch (uMsg)    //消息选择
+	{
+
+	case WM_CREATE:
+
+		hInstance = GetModuleHandle(NULL);
+		hmRoot = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENUROOT));
+		hmPop = GetSubMenu(hmRoot, 0);
+
+		break;
+
+	case WM_CLOSE:
+		ShowWindow(hwnd, SW_HIDE);
+		return 1;
+
+	case WM_HOTKEY:
+		// 不屏蔽按键时，按下则为启动
+		if (wParam == hotkeyId)
+		{
+			isEnable = true;
+			keybd_event(VK_LMENU, 0, KEYEVENTF_KEYUP, 0);
+			setListenState(true);
+			ShowBalloonTip("快捷操作已  启用（switch on）。", "状态更改", 1500);
+			ChangeTrayIcon(IDI_ICON_ENB);
+		}
+		break;
+		
+	case WM_CALLBACK_DISABLE:
+		// 这里是程序启用时，按下则为关闭
+		isEnable = false;
+		setListenState(false);
+		ChangeTrayIcon(IDI_ICON_BLK);
+		
+		break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDM_ENABLE:
+			isEnable = !isEnable;
+			setListenState(isEnable);
+			if (isEnable)
+			{
+				ChangeTrayIcon(IDI_ICON_ENB);
+			}
+			else
+			{
+				ChangeTrayIcon(IDI_ICON_BLK);
+			}
+			break;
+		case IDM_EXIT:
+			delTrayIcon();
+			PostQuitMessage(0);
+			break;
+		}
+
+
+		break;
+	case WM_TRAY_ICON:
+
+		if (lParam == WM_LBUTTONDBLCLK)
+		{
+			ShowWindow(hwnd, SW_SHOW);
+		}
+		else if (lParam == WM_RBUTTONUP)
+		{
+
+			POINT p;
+			GetCursorPos(&p);
+			SetForegroundWindow(hwnd);
+			if (isEnable)
+			{
+				CheckMenuItem(hmPop, IDM_ENABLE, MF_CHECKED);
+			}
+			else
+			{
+				CheckMenuItem(hmPop, IDM_ENABLE, MF_UNCHECKED);
+			}
+			TrackPopupMenu(hmPop, TPM_RIGHTBUTTON, p.x, p.y, NULL, hwnd, NULL);
+
+		}
+
+		break;
+	}
+	return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	//对于我们不想处理的消息, 比如鼠标在窗口上移动时发出的消息
+	//我们就原样传给默认的窗口消息处理函数处理, 不然应用程序会失去响应
 }

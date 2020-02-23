@@ -65,27 +65,52 @@ LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 	if (isListening && nCode >= 0)
 	{
-		if (bIsFuncKeyDown == false && wParam == WM_SYSKEYDOWN && p->vkCode == FUNC_KEY)
+		if (p->vkCode == HOOK_KEY_FUNC)
 		{
-			bIsFuncKeyDown = true;
-			bWant2Move = false;
-			bWant2Size = false;
-		}
-
-		if (bIsFuncKeyDown && wParam == WM_KEYUP && p->vkCode == FUNC_KEY)
-		{
-			bIsFuncKeyDown = false;
-
-			RECT rNow;
-			GetWindowRect(fWin, &rNow);
-
-			if (rNow.bottom != winRect.bottom || rNow.left != winRect.left || rNow.right != winRect.right || rNow.top != winRect.top)
+			if (!bIsFuncKeyDown)
 			{
-				winRect = rNow;
-				// HWND hF = GetFocus();
-				SendMessage(fWin, WM_KEYUP, FUNC_KEY, 1);
-				SendMessage(fWin, WM_SYSKEYDOWN, FUNC_KEY, 1);
+				/*
+				if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP)
+				{
+					// 没有监听的情况，释放按键松开事件
+					// keybd_event(VK_LMENU, 0, KEYEVENTF_KEYUP, 0);
+					// return CallNextHookEx(kHook, nCode, wParam, lParam);
+				}
+				*/
+				if (wParam == WM_SYSKEYDOWN || wParam == WM_KEYDOWN)
+				{
+					bIsFuncKeyDown = true;
+					bWant2Move = false;
+					bWant2Size = false;
+				}
+
 			}
+			if (bIsFuncKeyDown && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
+			{
+
+				bIsFuncKeyDown = false;
+
+				RECT rNow;
+				GetWindowRect(fWin, &rNow);
+
+				if (rNow.bottom != winRect.bottom || rNow.left != winRect.left || rNow.right != winRect.right || rNow.top != winRect.top)
+				{
+					// 窗口状态发生改变，则：
+					winRect = rNow;
+				}
+			}
+
+			// 所有func键事件都屏蔽
+			return 1;
+		}
+		else if (bIsFuncKeyDown && p->vkCode == HOOK_KEY_SWITCH)
+		{
+			if ((wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)) 
+			{
+				HWND hwnd = FindWindow("ALV_KEYTOOL_WND", "按键快捷操作工具");
+				SendMessage(hwnd, WM_CALLBACK_DISABLE, 0, 0);
+			}
+			return 1;
 		}
 	}
 

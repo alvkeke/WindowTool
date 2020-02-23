@@ -2,9 +2,15 @@
 #include <vector>
 #include <string>
 
+
 using namespace std;
 
-#define FUNC_KEY VK_LMENU
+#define HOOK_KEY_FUNC VK_LMENU
+#define HOT_KEY_FUNC MOD_ALT
+#define HOOK_KEY_SWITCH VK_F1
+
+
+#define WM_CALLBACK_DISABLE WM_USER + 2
 
 int initHook(HINSTANCE hInstance, vector<string>);
 

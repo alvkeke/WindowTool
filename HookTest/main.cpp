@@ -5,7 +5,10 @@
 #include "main.h"
 
 
-bool isEnable;
+bool bEnableListen;
+bool bEnableTab;
+bool bEnableF4;
+
 ATOM hotkeyId;
 
 
@@ -68,15 +71,20 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		}
 	}
 
-	if (initHook(hInstance, MarkedClasses))
+	if (initHook(hInstance, hwnd, MarkedClasses))
 	{
 		MessageBox(0, "监听出错，程序已退出。\nError in listen event, application exit.", TEXT("错误"), MB_OK | MB_ICONERROR);
 		return 1;
 	}
 	
 	// 默认状态，以后可以修改为从配置文件中读取
-	isEnable = true;
-	setListenState(isEnable);
+	bEnableListen = true;
+	bEnableF4 = true;
+	bEnableTab = true;
+
+	setListenState(bEnableListen);
+	setEnableF4(bEnableF4);
+	setEnableTab(bEnableTab);
 
 	hotkeyId = GlobalAddAtom("switchStateKey") - 0xc000;
 	RegisterHotKey(hwnd, hotkeyId, HOT_KEY_FUNC, HOOK_KEY_SWITCH);
@@ -119,7 +127,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// 不屏蔽按键时，按下则为启动
 		if (wParam == hotkeyId)
 		{
-			isEnable = true;
+			bEnableListen = true;
 			keybd_event(VK_LMENU, 0, KEYEVENTF_KEYUP, 0);
 			setListenState(true);
 			ShowBalloonTip("快捷操作已  启用（switch on）。", "状态更改", 1500);
@@ -129,17 +137,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		
 	case WM_CALLBACK_DISABLE:
 		// 这里是程序启用时，按下则为关闭
-		isEnable = false;
-		setListenState(false);
+		bEnableListen = false;
+		// setListenState(false);	//这个方法能够在hooks.cpp中被调用，故不需要在此处调用
 		ChangeTrayIcon(IDI_ICON_BLK);
 		
 		break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
-		case IDM_ENABLE:
-			isEnable = !isEnable;
-			setListenState(isEnable);
-			if (isEnable)
+		case IDM_ENABLE_LISTEN:
+			bEnableListen = !bEnableListen;
+			setListenState(bEnableListen);
+			if (bEnableListen)
 			{
 				ChangeTrayIcon(IDI_ICON_ENB);
 			}
@@ -148,12 +156,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				ChangeTrayIcon(IDI_ICON_BLK);
 			}
 			break;
+
+		case IDM_ENABLE_F4:
+			bEnableF4 = !bEnableF4;
+			setEnableF4(bEnableF4);
+			break;
+
+		case IDM_ENABLE_TAB:
+			bEnableTab = !bEnableTab;
+			setEnableTab(bEnableTab);
+			break;
+
 		case IDM_EXIT:
 			delTrayIcon();
 			PostQuitMessage(0);
 			break;
 		}
-
 
 		break;
 	case WM_TRAY_ICON:
@@ -168,14 +186,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			POINT p;
 			GetCursorPos(&p);
 			SetForegroundWindow(hwnd);
-			if (isEnable)
-			{
-				CheckMenuItem(hmPop, IDM_ENABLE, MF_CHECKED);
-			}
+			if (bEnableListen)
+				CheckMenuItem(hmPop, IDM_ENABLE_LISTEN, MF_CHECKED);
 			else
-			{
-				CheckMenuItem(hmPop, IDM_ENABLE, MF_UNCHECKED);
-			}
+				CheckMenuItem(hmPop, IDM_ENABLE_LISTEN, MF_UNCHECKED);
+			
+			if (bEnableF4)
+				CheckMenuItem(hmPop, IDM_ENABLE_F4, MF_CHECKED);
+			else
+				CheckMenuItem(hmPop, IDM_ENABLE_F4, MF_UNCHECKED);
+
+			if (bEnableTab)
+				CheckMenuItem(hmPop, IDM_ENABLE_TAB, MF_CHECKED);
+			else
+				CheckMenuItem(hmPop, IDM_ENABLE_TAB, MF_UNCHECKED);
+
+
 			TrackPopupMenu(hmPop, TPM_RIGHTBUTTON, p.x, p.y, NULL, hwnd, NULL);
 
 		}

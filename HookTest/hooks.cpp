@@ -1,21 +1,34 @@
 #include "hooks.h"
 
 
+// 程序本身主窗口句柄
+HWND hwnd;
+
+// Hook
+HHOOK kHook, mHook;
+
+// 窗口与鼠标信息
 HWND fWin;
 RECT winRect;
 POINT pDown, pNow;
+
+// 当前状态
+bool bIsListening;
 bool bIsFuncKeyDown;
 bool bWant2Move;
 bool bWant2Size;
 
-HHOOK kHook, mHook;
+bool bIsFuncKeySet;
 
+// 附加功能开关
+bool bIsEnableF4;
+bool bIsEnableTab;
+
+// 屏蔽的窗口
 vector<string> MarkedClasses;
 
-bool isListening;
 
-
-int initHook(HINSTANCE hInstance, vector<string> s)
+int initHook(HINSTANCE hInstance, HWND hWnd, vector<string> s)
 {
 
 	MarkedClasses = s;
@@ -23,6 +36,7 @@ int initHook(HINSTANCE hInstance, vector<string> s)
 	bIsFuncKeyDown = false;
 	bWant2Move = false;
 	bWant2Size = false;
+	bIsFuncKeySet = false;
 
 
 	// 设置键盘全局监听
@@ -51,66 +65,37 @@ int initHook(HINSTANCE hInstance, vector<string> s)
 		return 1;
 	}
 
+	hwnd = hWnd;
+
 	return 0;
 }
 
 void setListenState(bool foo)
 {
-	isListening = foo;
+	bIsListening = foo;
+}
+
+void setEnableF4(bool foo)
+{
+	bIsEnableF4 = foo;
+}
+
+void setEnableTab(bool foo)
+{
+	bIsEnableTab = foo;
 }
 
 LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
+	PKBDLLHOOKSTRUCT kbdata = (PKBDLLHOOKSTRUCT)lParam;
 
-	if (isListening && nCode >= 0)
+	if (bIsListening && nCode >= 0)
 	{
-		/*
-		if (p->vkCode == HOOK_KEY_FUNC)
-		{
-			if (!bIsFuncKeyDown)
-			{
-
-				if (wParam == WM_SYSKEYDOWN || wParam == WM_KEYDOWN)
-				{
-					bIsFuncKeyDown = true;
-					bWant2Move = false;
-					bWant2Size = false;
-				}
-
-			}
-			if (bIsFuncKeyDown && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
-			{
-
-				bIsFuncKeyDown = false;
-
-				RECT rNow;
-				GetWindowRect(fWin, &rNow);
-
-				if (rNow.bottom != winRect.bottom || rNow.left != winRect.left || rNow.right != winRect.right || rNow.top != winRect.top)
-				{
-					// 窗口状态发生改变，则：
-					winRect = rNow;
-				}
-			}
-
-			// 所有func键事件都屏蔽
-			return 1;
-		}
-		else if (bIsFuncKeyDown && p->vkCode == HOOK_KEY_SWITCH)
-		{
-			if ((wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)) 
-			{
-				HWND hwnd = FindWindow("ALV_KEYTOOL_WND", "按键快捷操作工具");
-				SendMessage(hwnd, WM_CALLBACK_DISABLE, 0, 0);
-			}
-			return 1;
-		}
-		*/
 
 		if (bIsFuncKeyDown)
 		{
-			if (p->vkCode == HOOK_KEY_FUNC && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
+			// 主功能，Func键松开
+			if (kbdata->vkCode == HOOK_KEY_FUNC && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
 			{
 				bIsFuncKeyDown = false;
 
@@ -122,22 +107,123 @@ LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 					// 窗口状态发生改变，则：
 					winRect = rNow;
 				}
+				// 如果在代码中设置了Fun键按下，则在松开时需要在代码中设置松开
+				if (bIsFuncKeySet)
+				{
+					keybd_event(HOOK_KEY_FUNC, 0, KEYEVENTF_KEYUP, 0);
+					bIsFuncKeySet = false;
+				}
 			}
-			else if (p->vkCode == HOOK_KEY_SWITCH)
+			// 切换监听开关的hook
+			else if (kbdata->vkCode == HOOK_KEY_SWITCH)
 			{
 				if ((wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN))
 				{
-					HWND hwnd = FindWindow("ALV_KEYTOOL_WND", "按键快捷操作工具");
 					SendMessage(hwnd, WM_CALLBACK_DISABLE, 0, 0);
+					setListenState(false);
 				}
+			}
+			// 模拟alt+f4
+			else if (bIsEnableF4 && kbdata->vkCode == VK_F4 && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN))
+			{
+
+				if (bIsFuncKeySet)
+				{
+					keybd_event(VK_F4, 0, 0, 0);
+				}
+				else
+				{
+					keybd_event(HOOK_KEY_FUNC, 0, 0, 0);
+					keybd_event(VK_F4, 0, 0, 0);
+					bIsFuncKeySet = true;
+				}
+			}
+			else if (bIsEnableF4 && kbdata->vkCode == VK_F4 && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
+			{
+				if (bIsFuncKeySet)
+				{
+					keybd_event(VK_F4, 0, KEYEVENTF_KEYUP, 0);
+				}
+			}
+			// 模拟alt+tab，切换应用
+			else if (bIsEnableTab && kbdata->vkCode == VK_TAB && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN))
+			{
+				if (bIsFuncKeySet)
+				{
+					keybd_event(VK_TAB, 0, 0, 0);
+				}
+				else
+				{
+					keybd_event(HOOK_KEY_FUNC, 0, 0, 0);
+					keybd_event(VK_TAB, 0, 0, 0);
+					bIsFuncKeySet = true;
+				}
+			}
+			else if (bIsEnableTab && kbdata->vkCode == VK_TAB && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
+			{
+				if (bIsFuncKeySet)
+				{
+					keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, 0);
+				}
+			}
+			/* 此时模拟方向键的功能暂时还无效，需要修改代码*/
+			//	方向键按下
+			else if (kbdata->vkCode == HOOK_KEY_UP && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN))
+			{
+				keybd_event(VK_UP, MapVirtualKey(VK_UP, 0), 0, 0);
+			}
+			else if (kbdata->vkCode == HOOK_KEY_DOWN && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN))
+			{
+				keybd_event(VK_DOWN, 0, 0, 0);
+			}
+			else if (kbdata->vkCode == HOOK_KEY_LEFT && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN))
+			{
+				keybd_event(VK_LEFT, 0, 0, 0);
+			}
+			else if (kbdata->vkCode == HOOK_KEY_RIGHT && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN))
+			{
+				keybd_event(VK_RIGHT, 0, 0, 0);
+			}
+			// 方向键松开
+			else if (kbdata->vkCode == HOOK_KEY_UP && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
+			{
+				keybd_event(VK_UP, MapVirtualKey(VK_UP, 0), KEYEVENTF_KEYUP, 0);
+			}
+			else if (kbdata->vkCode == HOOK_KEY_DOWN && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
+			{
+				keybd_event(VK_DOWN, 0, KEYEVENTF_KEYUP, 0);
+			}
+			else if (kbdata->vkCode == HOOK_KEY_LEFT && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
+			{
+				keybd_event(VK_LEFT, 0, KEYEVENTF_KEYUP, 0);
+			}
+			else if (kbdata->vkCode == HOOK_KEY_RIGHT && (wParam == WM_KEYUP || wParam == WM_SYSKEYUP))
+			{
+				keybd_event(VK_RIGHT, 0, KEYEVENTF_KEYUP, 0);
+			}
+			// 测试用
+			else
+			{
+				// HWND hwnd = FindWindow("ALV_KEYTOOL_WND", "按键快捷操作工具");
+				if (IsWindowVisible(hwnd)) 
+				{
+					if (kbdata->vkCode == HOOK_KEY_FUNC) return 1;
+					// for test
+					char nums[20];
+					sprintf_s(nums, 20, "%d:%x,%x", kbdata->vkCode, kbdata->vkCode, (int)wParam);
+					MessageBox(0, nums, "", 0);
+				}
+
 			}
 			
 			return 1;
 		}
 		else
 		{
-			if (p->vkCode == HOOK_KEY_FUNC && (wParam == WM_SYSKEYDOWN || wParam == WM_KEYDOWN))
+			// 主功能，Func键按下
+			if (kbdata->vkCode == HOOK_KEY_FUNC && (wParam == WM_SYSKEYDOWN || wParam == WM_KEYDOWN))
 			{
+
 				bIsFuncKeyDown = true;
 				bWant2Move = false;
 				bWant2Size = false;
@@ -155,7 +241,7 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 	LPMSLLHOOKSTRUCT p = (LPMSLLHOOKSTRUCT)lParam;
 	POINT   pt = p->pt;
 
-	if (isListening && nCode >= 0 && bIsFuncKeyDown)
+	if (bIsListening && nCode >= 0 && bIsFuncKeyDown)
 	{
 		int newX, newY;
 		int newW, newH;

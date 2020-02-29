@@ -70,8 +70,7 @@ BEGIN
     BEGIN
         MENUITEM "启用快捷操作",                      IDM_ENABLE_LISTEN
         MENUITEM SEPARATOR
-        MENUITEM "启用 Alt+&Tab",                 IDM_ENABLE_TAB
-        MENUITEM "启用 Alt+&F4",                  IDM_ENABLE_F4
+        MENUITEM "启用提示",                        IDM_ENABLE_TIP
         MENUITEM SEPARATOR
         MENUITEM "退出",                          IDM_EXIT
     END

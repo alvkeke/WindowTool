@@ -77,18 +77,6 @@ void setListenState(bool foo)
 	bIsListening = foo;
 }
 
-/*
-void setEnableF4(bool foo)
-{
-	bIsEnableF4 = foo;
-}
-
-void setEnableTab(bool foo)
-{
-	bIsEnableTab = foo;
-}
-*/
-
 LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	PKBDLLHOOKSTRUCT kbdata = (PKBDLLHOOKSTRUCT)lParam;
@@ -125,6 +113,14 @@ LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 					bIsFuncKeyDown = false;
 				}   
+			}
+			else if (kbdata->vkCode == HOOK_KEY_SWITCH)
+			{
+				if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
+				{
+					bBlockFuncKey = true;
+					SendMessage(hwnd, WM_CALLBACK_SWITCH, 0, 0);
+				}
 			}
 			else
 			{

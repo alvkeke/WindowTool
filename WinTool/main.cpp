@@ -6,6 +6,7 @@
 
 
 bool bEnableListen;
+bool bEnableTips;
 
 ATOM hotkeyId;
 HMENU hmPop;
@@ -13,8 +14,7 @@ HMENU hmPop;
 
 HINSTANCE hInstance;
 HWND hcbListen;
-HWND hcbF4;
-HWND hcbTab;
+HWND hcbTips;
 
 HWND hlbKeyDown;
 
@@ -28,7 +28,7 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wc.cbClsExtra = 0;
 	wc.cbSize = sizeof(wc);
 	wc.cbWndExtra = 0;
-	wc.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
+	wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
 	wc.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(IDC_ARROW));
 	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON_APP));
 	wc.hIconSm = NULL;
@@ -57,7 +57,6 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	//ShowWindow(hwnd, SW_SHOW);
 	UpdateWindow(hwnd);                //更新窗口
 
-
 	// 加载需要屏蔽窗口的顶层窗口类名
 	vector<string> MarkedClasses;
 
@@ -85,9 +84,6 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return 1;
 	}
 
-	// hotkeyId = GlobalAddAtom("switchStateKey") - 0xc000;
-	// RegisterHotKey(hwnd, hotkeyId, HOT_KEY_FUNC, HOOK_KEY_SWITCH);
-
 	// 5. 消息循环
 	MSG Msg;
 	while (GetMessage(&Msg, NULL, 0, 0))
@@ -108,6 +104,11 @@ void showPopupMenu(HWND hwnd, HMENU hmPop)
 		CheckMenuItem(hmPop, IDM_ENABLE_LISTEN, MF_CHECKED);
 	else
 		CheckMenuItem(hmPop, IDM_ENABLE_LISTEN, MF_UNCHECKED);
+
+	if (bEnableTips)
+		CheckMenuItem(hmPop, IDM_ENABLE_TIP, MF_CHECKED);
+	else
+		CheckMenuItem(hmPop, IDM_ENABLE_TIP, MF_UNCHECKED);
 
 	TrackPopupMenu(hmPop, TPM_RIGHTBUTTON, p.x, p.y, NULL, hwnd, NULL);
 
@@ -130,6 +131,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		// 默认状态，以后可以修改为从配置文件中读取
 		bEnableListen = true;
+		bEnableTips = false;
 
 		setListenState(bEnableListen);
 
@@ -145,16 +147,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		/* 创建控件 */
 		hcbListen = CreateWindowEx(0, "BUTTON", TITLE_CB_LISTEN, WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-			10, 10, 200, 30, hwnd, (HMENU)ID_CB_LISTEN, hInstance, NULL);
+			20, 20, 200, 30, hwnd, (HMENU)ID_CB_LISTEN, hInstance, NULL);
 
-		hcbTab = CreateWindowEx(0, "BUTTON", TITLE_CB_TAB, WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-			30, 50, 200, 30, hwnd, (HMENU)ID_CB_TAB, hInstance, NULL);
-
-		hcbF4 = CreateWindowEx(0, "BUTTON", TITLE_CB_F4, WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-			30, 90, 200, 30, hwnd, (HMENU)ID_CB_F4, hInstance, NULL);
+		hcbTips = CreateWindowEx(0, "BUTTON", TITLE_CB_LISTEN, WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+			20, 60, 200, 30, hwnd, (HMENU)ID_CB_TIPS, hInstance, NULL);
 
 		hlbKeyDown = CreateWindow("LISTBOX", "LISTBOX", WS_CHILD | WS_VISIBLE, 
-			30, 130, 200, 120, hwnd, (HMENU)ID_LB_KEYDOWN, hInstance, NULL);
+			20, 110, 200, 120, hwnd, (HMENU)ID_LB_KEYDOWN, hInstance, NULL);
 
 		if (bEnableListen)
 		{
@@ -167,40 +166,60 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hcbListen, BM_SETCHECK, BST_UNCHECKED, 0);
 		}
 
+		if (bEnableTips)
+		{
+			SendMessage(hcbTips, BM_SETCHECK, BST_CHECKED, 0);
+		}
+		else
+		{
+			SendMessage(hcbTips, BM_SETCHECK, BST_UNCHECKED, 0);
+		}
+
 		break;
 
 	case WM_SIZE:
-		int cyClient;
+		int cyClient, cxClient;
 		cyClient = HIWORD(lParam); // 获得客户区高度
-		SetWindowPos(hlbKeyDown, 0, 0, 0, 200, cyClient - 140, SWP_NOMOVE);
+		cxClient = LOWORD(lParam);
+		SetWindowPos(hlbKeyDown, 0, 0, 0, cxClient - 40, cyClient - 130, SWP_NOMOVE);
+		SetWindowPos(hcbListen, 0, 0, 0, cxClient - 40, 30, SWP_NOMOVE);
+		SetWindowPos(hcbTips, 0, 0, 0, cxClient - 40, 30, SWP_NOMOVE);
 		break;
 
 	case WM_RBUTTONUP:
 		showPopupMenu(hwnd, hmPop);
 		break;
 
+	case WM_KEYUP:
+		// 窗口显示的时候，按下退出键可以隐藏窗口
+		if (wParam == VK_ESCAPE)
+		{
+			ShowWindow(hwnd, SW_HIDE);
+		}
+		break;
+
 	case WM_CLOSE:
 		ShowWindow(hwnd, SW_HIDE);
 		return 1;
-
-	case WM_HOTKEY:
-		// 不屏蔽按键时，按下则为启动
-		if (wParam == hotkeyId)
+		
+	case WM_CALLBACK_SWITCH:
+		bEnableListen = !bEnableListen;
+		setListenState(bEnableListen);
+		if (bEnableListen)
 		{
-			bEnableListen = true;
-			keybd_event(HOOK_KEY_FUNC, 0, KEYEVENTF_KEYUP, 0);
-			setListenState(true);
-			ShowBalloonTip("快捷操作已  启用（switch on）。", "状态更改", 1500);
 			ChangeTrayIcon(IDI_ICON_ENB);
+			if (bEnableTips) 
+			{
+				ShowBalloonTip("已启用快捷操作方式", "WinTool", 100, 0);
+			}
+			SendMessage(hcbListen, BM_SETCHECK, BST_CHECKED, 0);
 		}
-		break;
-		
-	case WM_CALLBACK_DISABLE:
-		// 这里是程序启用时，按下则为关闭
-		bEnableListen = false;
-		// setListenState(false);	//这个方法能够在hooks.cpp中被调用，故不需要在此处调用
-		ChangeTrayIcon(IDI_ICON_BLK);
-		
+		else
+		{
+			ChangeTrayIcon(IDI_ICON_BLK);
+			SendMessage(hcbListen, BM_SETCHECK, BST_UNCHECKED, 0);
+		}
+
 		break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) 
@@ -219,6 +238,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
+		case ID_CB_TIPS:
+			result = SendMessage(hcbTips, BM_GETCHECK, 0, 0);
+			bEnableTips = (result == BST_CHECKED);
+			setListenState(bEnableTips);
+
+			break;
+
 		case ID_LB_KEYDOWN:
 			
 			break;
@@ -235,6 +261,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				ChangeTrayIcon(IDI_ICON_BLK);
 				SendMessage(hcbListen, BM_SETCHECK, BST_UNCHECKED, 0);
+			}
+			break;
+
+		case IDM_ENABLE_TIP:
+			bEnableTips = !bEnableTips;
+			if (bEnableTips)
+			{
+				SendMessage(hcbTips, BM_SETCHECK, BST_CHECKED, 0);
+			}
+			else
+			{
+				SendMessage(hcbTips, BM_SETCHECK, BST_UNCHECKED, 0);
 			}
 			break;
 

@@ -1,7 +1,7 @@
 c:\workspace\vs\wintool\wintool\x64\release\vc142.pdb
+c:\workspace\vs\wintool\wintool\x64\release\trayicon.obj
 c:\workspace\vs\wintool\wintool\x64\release\main.obj
 c:\workspace\vs\wintool\wintool\x64\release\hooks.obj
-c:\workspace\vs\wintool\wintool\x64\release\trayicon.obj
 c:\workspace\vs\wintool\x64\release\wintool.exe
 c:\workspace\vs\wintool\x64\release\wintool.pdb
 c:\workspace\vs\wintool\wintool\x64\release\wintool.res
@@ -11,7 +11,6 @@ c:\workspace\vs\wintool\wintool\x64\release\wintool.tlog\cl.command.1.tlog
 c:\workspace\vs\wintool\wintool\x64\release\wintool.tlog\cl.read.1.tlog
 c:\workspace\vs\wintool\wintool\x64\release\wintool.tlog\cl.write.1.tlog
 c:\workspace\vs\wintool\wintool\x64\release\wintool.tlog\link.command.1.tlog
-c:\workspace\vs\wintool\wintool\x64\release\wintool.tlog\link.delete.1.tlog
 c:\workspace\vs\wintool\wintool\x64\release\wintool.tlog\link.read.1.tlog
 c:\workspace\vs\wintool\wintool\x64\release\wintool.tlog\link.write.1.tlog
 c:\workspace\vs\wintool\wintool\x64\release\wintool.tlog\rc.command.1.tlog

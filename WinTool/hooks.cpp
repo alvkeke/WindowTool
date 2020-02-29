@@ -276,10 +276,6 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 					if (MarkedClasses.at(i)._Equal(pname)) goto exitl;
 				}
 
-				//if (IsZoomed(fWin)) {
-				//	ShowWindow(fWin, SW_SHOWNORMAL);
-				//}
-
 				GetWindowRect(fWin, &winRect);
 				bWant2Size = true;
 				if (!strcmp(pname, "Windows.UI.Core.CoreWindow")) bWant2Size = false;

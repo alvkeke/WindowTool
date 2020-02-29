@@ -35,7 +35,7 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wc.hInstance = hInstance;
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = WNDCLASS;
-	wc.lpszMenuName = NULL;
+	wc.lpszMenuName = "IDR_WINMENU";
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 
 	if (!RegisterClassEx(&wc)) {
@@ -43,8 +43,10 @@ int WINAPI CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return 1;
 	}
 
+	HMENU hMenu = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_WINMENU));
+
 	HWND hwnd = CreateWindowEx(0, WNDCLASS, WNDTITLE, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, 320, 240, NULL, NULL, hInstance, NULL);
+		CW_USEDEFAULT, CW_USEDEFAULT, 320, 240, NULL, hMenu, hInstance, NULL);
 
 	if (!hwnd) {
 		MessageBox(NULL, "CreateWindowEx Failed!", NULL, MB_OK);
@@ -276,7 +278,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
+		case IDM_HELP:
+			MessageBox(hwnd, HELP_TEXT, "°ïÖú", 0);
+			break;
+
 		case IDM_EXIT:
+			delTrayIcon();
+			PostQuitMessage(0);
+			break;
+
+		case IDM_HELP2:
+			MessageBox(hwnd, HELP_TEXT, "°ïÖú", 0);
+			break;
+
+		case IDM_EXIT2:
 			delTrayIcon();
 			PostQuitMessage(0);
 			break;

@@ -4,9 +4,9 @@ C:\workspace\VS\WinTool\WinTool\hooks.cpp(133,24): warning C4244: “参数”: 
 C:\workspace\VS\WinTool\WinTool\hooks.cpp(137,24): warning C4244: “参数”: 从“DWORD”转换到“BYTE”，可能丢失数据
   main.cpp
 C:\workspace\VS\WinTool\WinTool\main.cpp(32,32): warning C4302: “类型强制转换”: 从“LPSTR”到“WORD”截断
-C:\workspace\VS\WinTool\WinTool\main.cpp(95,12): warning C4244: “return”: 从“WPARAM”转换到“int”，可能丢失数据
-C:\workspace\VS\WinTool\WinTool\main.cpp(228,24): warning C4244: “=”: 从“LRESULT”转换到“int”，可能丢失数据
-C:\workspace\VS\WinTool\WinTool\main.cpp(242,24): warning C4244: “=”: 从“LRESULT”转换到“int”，可能丢失数据
+C:\workspace\VS\WinTool\WinTool\main.cpp(97,12): warning C4244: “return”: 从“WPARAM”转换到“int”，可能丢失数据
+C:\workspace\VS\WinTool\WinTool\main.cpp(230,24): warning C4244: “=”: 从“LRESULT”转换到“int”，可能丢失数据
+C:\workspace\VS\WinTool\WinTool\main.cpp(244,24): warning C4244: “=”: 从“LRESULT”转换到“int”，可能丢失数据
   trayicon.cpp
   正在生成代码
   Previous IPDB not found, fall back to full compilation.

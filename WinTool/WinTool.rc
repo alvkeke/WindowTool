@@ -72,21 +72,22 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "启用提示",                        IDM_ENABLE_TIP
         MENUITEM SEPARATOR
+        MENUITEM "帮助",                          IDM_HELP
+        MENUITEM SEPARATOR
         MENUITEM "退出",                          IDM_EXIT
     END
 END
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// String Table
-//
-
-STRINGTABLE
+IDR_WINMENU MENU
 BEGIN
-    IDS_TITLE_CB_LISTEN     "启用Hook监听"
-    IDS_TITLE_CB_F4         "启用 Alt+F4"
-    IDS_TITLE_CB_TAB        "启用 Alt_Tab"
+    POPUP "文件"
+    BEGIN
+        MENUITEM "退出",                          IDM_EXIT2
+    END
+    POPUP "关于"
+    BEGIN
+        MENUITEM "帮助",                          IDM_HELP2
+    END
 END
 
 #endif    // 中文(简体，中国) resources

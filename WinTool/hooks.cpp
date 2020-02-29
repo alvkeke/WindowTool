@@ -148,8 +148,8 @@ LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	LPMSLLHOOKSTRUCT p = (LPMSLLHOOKSTRUCT)lParam;
-	POINT   pt = p->pt;
+	LPMSLLHOOKSTRUCT mdata = (LPMSLLHOOKSTRUCT)lParam;
+	POINT   pt = mdata->pt;
 
 	if (bIsListening && nCode >= 0 && bIsFuncKeyDown)
 	{
@@ -162,85 +162,144 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 		newW = winRect.right - winRect.left + pNow.x - pDown.x;
 		newH = winRect.bottom - winRect.top + pNow.y - pDown.y;
 
-		if (bWant2Move && wParam == WM_MOUSEMOVE)
+		if (wParam == WM_MBUTTONUP)
 		{
+			bBlockFuncKey = true;
+
+			GetCursorPos(&pDown);
+			fWin = WindowFromPoint(pDown);
+			if (fWin == 0) goto exitl;
+			while (GetParent(fWin)) {
+				fWin = GetParent(fWin);
+			}
+			if (IsZoomed(fWin))
+			{
+				ShowWindow(fWin, SW_SHOWNORMAL);
+			}
+			else
+			{
+				ShowWindow(fWin, SW_MAXIMIZE);
+			}
+
+			return 1;
+		}
+		else if (wParam == WM_MBUTTONDOWN)
+		{
+			// 屏蔽中键按下事件，防止中键被保持按下状态。
+			return 1;
+		}
+		else if (wParam == WM_MOUSEWHEEL)
+		{
+			bBlockFuncKey = true;
+
+			GetCursorPos(&pDown);
+			fWin = WindowFromPoint(pDown);
+			if (fWin == 0) goto exitl;
+			while (GetParent(fWin)) {
+				fWin = GetParent(fWin);
+			}
+			SetFocus(fWin);
+
+			short delta = GET_WHEEL_DELTA_WPARAM(mdata->mouseData);
+			if (delta > 0)
+			{
+				SetWindowPos(fWin, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+			}
+			else
+			{
+				SetWindowPos(fWin, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+			}
+			return 1;
+		}
+		else if (bWant2Move && wParam == WM_MOUSEMOVE)
+		{
+			if (IsZoomed(fWin)) {
+				ShowWindow(fWin, SW_SHOWNORMAL);
+			}
 			SetWindowPos(fWin, 0, newX, newY, 0, 0, SWP_NOSIZE);
 		}
-
-		if (bWant2Size && wParam == WM_MOUSEMOVE)
+		else if (bWant2Size && wParam == WM_MOUSEMOVE)
 		{
+			if (IsZoomed(fWin)) {
+				ShowWindow(fWin, SW_SHOWNORMAL);
+			}
 			SetWindowPos(fWin, 0, 0, 0, newW, newH, SWP_NOMOVE);
 		}
-
-		if (wParam == WM_LBUTTONDOWN)
+		else if (wParam == WM_LBUTTONDOWN)
 		{
-			bBlockFuncKey = true;
+			if (!bWant2Size)
+			{
+				bBlockFuncKey = true;
 
-			GetCursorPos(&pDown);
-			fWin = WindowFromPoint(pDown);
-			if (fWin == 0) goto exitl;
-			while (GetParent(fWin)) {
-				fWin = GetParent(fWin);
+				GetCursorPos(&pDown);
+				fWin = WindowFromPoint(pDown);
+				if (fWin == 0) goto exitl;
+				while (GetParent(fWin)) {
+					fWin = GetParent(fWin);
+				}
+
+				SetFocus(fWin);
+
+				char pname[256];
+				RealGetWindowClass(fWin, pname, 255);
+				for (int i = 0; i < MarkedClasses.size(); i++) {
+					if (MarkedClasses.at(i)._Equal(pname)) goto exitl;
+				}
+
+
+				GetWindowRect(fWin, &winRect);
+				bWant2Move = true;
+				if (!strcmp(pname, "Windows.UI.Core.CoreWindow")) bWant2Move = false;
+				//for (int i = 0; i<)
 			}
 
-			SetFocus(fWin);
-
-			char pname[256];
-			RealGetWindowClass(fWin, pname, 255);
-			for (int i = 0; i < MarkedClasses.size(); i++) {
-				if (MarkedClasses.at(i)._Equal(pname)) goto exitl;
-			}
-
-			if (IsZoomed(fWin)) {
-				ShowWindow(fWin, SW_SHOWNORMAL);
-			}
-
-			GetWindowRect(fWin, &winRect);
-			bWant2Move = true;
-			if (!strcmp(pname, "Windows.UI.Core.CoreWindow")) bWant2Move = false;
-			//for (int i = 0; i<)
 			return 1;
 		}
-		if (wParam == WM_RBUTTONDOWN)
+		else if (wParam == WM_RBUTTONDOWN)
 		{
-			bBlockFuncKey = true;
+			if (!bWant2Move)
+			{
+				bBlockFuncKey = true;
 
-			GetCursorPos(&pDown);
-			fWin = WindowFromPoint(pDown);
-			if (fWin == 0) goto exitl;
-			while (GetParent(fWin)) {
-				fWin = GetParent(fWin);
-			}
+				GetCursorPos(&pDown);
+				fWin = WindowFromPoint(pDown);
+				if (fWin == 0) goto exitl;
+				while (GetParent(fWin)) {
+					fWin = GetParent(fWin);
+				}
 
-			SetFocus(fWin);
+				SetFocus(fWin);
 			
-			char pname[256];
-			RealGetWindowClass(fWin, pname, 255);
-			for (int i = 0; i < MarkedClasses.size(); i++) {
-				if (MarkedClasses.at(i)._Equal(pname)) goto exitl;
+				char pname[256];
+				RealGetWindowClass(fWin, pname, 255);
+				for (int i = 0; i < MarkedClasses.size(); i++) {
+					if (MarkedClasses.at(i)._Equal(pname)) goto exitl;
+				}
+
+				//if (IsZoomed(fWin)) {
+				//	ShowWindow(fWin, SW_SHOWNORMAL);
+				//}
+
+				GetWindowRect(fWin, &winRect);
+				bWant2Size = true;
+				if (!strcmp(pname, "Windows.UI.Core.CoreWindow")) bWant2Size = false;
 			}
 
-			if (IsZoomed(fWin)) {
-				ShowWindow(fWin, SW_SHOWNORMAL);
-			}
-
-			GetWindowRect(fWin, &winRect);
-			bWant2Size = true;
-			if (!strcmp(pname, "Windows.UI.Core.CoreWindow")) bWant2Size = false;
 			return 1;
 		}
-		if (bWant2Move && wParam == WM_LBUTTONUP)
+		else if (bWant2Move && wParam == WM_LBUTTONUP)
 		{
 			SetWindowPos(fWin, 0, newX, newY, 0, 0, SWP_NOSIZE);
 			bWant2Move = false;
 			return 1;
 		}
-		if (bWant2Size && wParam == WM_RBUTTONUP)
+		else if (bWant2Size && wParam == WM_RBUTTONUP)
 		{
 			SetWindowPos(fWin, 0, 0, 0, newW, newH, SWP_NOMOVE);
 			bWant2Size = false;
 			return 1;
 		}
+
 
 	}
 
